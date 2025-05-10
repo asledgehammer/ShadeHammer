@@ -1,0 +1,6 @@
+name=ShadeHammer
+poster=poster.png
+id=shadehammer
+description=Custom Shader Modding Framework for Project Zomboid.
+url=
+require=asledgehammer_utilities

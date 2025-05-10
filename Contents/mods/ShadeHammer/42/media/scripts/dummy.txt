@@ -1,0 +1,16 @@
+module Base {
+    model Dummy_Shader_Model {
+        mesh = Vehicles_Wheel,
+		/* texture = Vehicles/vehicle_wheel, */
+        shader = ui,
+    }
+    item Dummy_UI_Item {
+        DisplayName = Dummy,
+		DisplayCategory = Junk,
+		Type = Normal,
+		Weight = 0.2,
+		Icon = Comb,
+        StaticModel = Dummy_Shader_Model,
+        WorldStaticModel = Dummy_Shader_Model,
+    }
+}
