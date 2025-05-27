@@ -48,7 +48,6 @@ function ModelRendererInternal:instantiate()
     self.javaObject:fromLua2('setModelScript', self.modelName, self.modelName);
     self:setView('UserDefined');
     self:createChildren();
-    Reflect.printJavaFields(self.javaObject);
 end
 
 function ModelRendererInternal:renderBackground()

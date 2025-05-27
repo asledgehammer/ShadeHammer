@@ -162,6 +162,9 @@ end
 ---
 --- @return boolean existsAndSet True if the uniform exists and is set.
 function LuaShader:setUniform(name, arg1, arg2, arg3, arg4)
+    -- if self.name == 'ShadeHammer' then
+    --     print(string.format('%s:setUniform(%s, %s %s %s %s)', self.name, name, tostring(arg1), tostring(arg2), tostring(arg3), tostring(arg4)));
+    -- end
     if not self.uniforms[name] then return false end
 
     local uniform = self.uniforms[name];
@@ -271,6 +274,19 @@ function LuaShader:new(javaObject, name)
             end);
     end
     return o;
+end
+
+function LuaShader:__tostring()
+    local s = 'LuaShader "%s" {\n%s\n}';
+    local b = '';
+    for k, v in pairs(self.uniforms) do
+        if b == '' then
+            b = b .. string.format('\t%s: %s', k, v.__type);
+        else
+            b = b .. string.format(',\n\t%s: %s', k, v.__type);
+        end
+    end
+    return string.format(s, self.name, b);
 end
 
 function LuaShader:onLoad() end

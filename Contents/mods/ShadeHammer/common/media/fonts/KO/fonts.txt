@@ -1,0 +1,88 @@
+VERSION = 1,
+
+font Code
+{
+	fnt = zomboidCode.fnt,
+	img = zomboidCode_0.png,
+}
+
+font Cred1
+{
+	fnt = zombiefontcredits1.fnt,
+	img = zombiefontcredits1_0.png,
+}
+
+font Cred2
+{
+	fnt = zombiefontcredits2.fnt,
+	img = zombiefontcredits2_0.png,
+}
+
+font Dialogue
+{
+	fnt = zomboidMediumKorean.fnt,
+}
+
+font Intro
+{
+	fnt = zomboidLargeKorean.fnt,
+}
+
+font Handwritten
+{
+	fnt = zomboidSmallKorean.fnt,
+}
+
+font MainMenu1
+{
+	fnt = mainfont.fnt,
+	img = mainfont_0.png,
+}
+
+font MainMenu2
+{
+	fnt = mainfont2.fnt,
+	img = mainfont2_0.png,
+}
+
+font Massive
+{
+	fnt = zombiefont5.fnt,
+	img = zombiefont5_0.png,
+}
+
+font NewSmall
+{
+	fnt = zomboidSmallKorean.fnt,
+}
+
+font NewMedium
+{
+	fnt = zomboidMediumKorean.fnt,
+}
+
+font NewLarge
+{
+	fnt = zomboidLargeKorean.fnt,
+}
+
+font Small
+{
+	fnt = zomboidSmallKorean.fnt,
+}
+
+font Medium
+{
+	fnt = zomboidMediumKorean.fnt,
+}
+
+font Large
+{
+	fnt = zomboidLargeKorean.fnt,
+}
+
+font Title
+{
+	fnt = zomboidLargeKorean.fnt,
+}
+

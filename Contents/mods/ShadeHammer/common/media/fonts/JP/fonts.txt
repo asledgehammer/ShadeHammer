@@ -1,0 +1,88 @@
+VERSION = 1,
+
+font Code
+{
+	fnt = zomboidCode.fnt,
+	img = zomboidCode_0.png,
+}
+
+font Cred1
+{
+	fnt = zombiefontcredits1.fnt,
+	img = zombiefontcredits1_0.png,
+}
+
+font Cred2
+{
+	fnt = zombiefontcredits2.fnt,
+	img = zombiefontcredits2_0.png,
+}
+
+font Dialogue
+{
+	fnt = zomboidMediumJapanese.fnt,
+}
+
+font Intro
+{
+	fnt = zomboidLargeJapanese.fnt,
+}
+
+font Handwritten
+{
+	fnt = zomboidSmallJapanese.fnt,
+}
+
+font MainMenu1
+{
+	fnt = mainfont.fnt,
+	img = mainfont_0.png,
+}
+
+font MainMenu2
+{
+	fnt = mainfont2.fnt,
+	img = mainfont2_0.png,
+}
+
+font Massive
+{
+	fnt = zombiefont5.fnt,
+	img = zombiefont5_0.png,
+}
+
+font NewSmall
+{
+	fnt = zomboidSmallJapanese.fnt,
+}
+
+font NewMedium
+{
+	fnt = zomboidMediumJapanese.fnt,
+}
+
+font NewLarge
+{
+	fnt = zomboidLargeJapanese.fnt,
+}
+
+font Small
+{
+	fnt = zomboidSmallJapanese.fnt,
+}
+
+font Medium
+{
+	fnt = zomboidMediumJapanese.fnt,
+}
+
+font Large
+{
+	fnt = zomboidLargeJapanese.fnt,
+}
+
+font Title
+{
+	fnt = zomboidLargeJapanese.fnt,
+}
+

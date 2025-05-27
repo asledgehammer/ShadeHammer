@@ -1,0 +1,88 @@
+VERSION = 1,
+
+font Code
+{
+	fnt = zomboidCode.fnt,
+	img = zomboidCode_0.png,
+}
+
+font Cred1
+{
+	fnt = zombiefontcredits1.fnt,
+	img = zombiefontcredits1_0.png,
+}
+
+font Cred2
+{
+	fnt = zombiefontcredits2.fnt,
+	img = zombiefontcredits2_0.png,
+}
+
+font Dialogue
+{
+	fnt = zomboidMediumChinese.fnt,
+}
+
+font Intro
+{
+	fnt = zomboidLargeChinese.fnt,
+}
+
+font Handwritten
+{
+	fnt = zomboidSmallChinese.fnt,
+}
+
+font MainMenu1
+{
+	fnt = mainfont.fnt,
+	img = mainfont_0.png,
+}
+
+font MainMenu2
+{
+	fnt = mainfont2.fnt,
+	img = mainfont2_0.png,
+}
+
+font Massive
+{
+	fnt = zombiefont5.fnt,
+	img = zombiefont5_0.png,
+}
+
+font NewSmall
+{
+	fnt = zomboidSmallChinese.fnt,
+}
+
+font NewMedium
+{
+	fnt = zomboidMediumChinese.fnt,
+}
+
+font NewLarge
+{
+	fnt = zomboidLargeChinese.fnt,
+}
+
+font Small
+{
+	fnt = zomboidSmallChinese.fnt,
+}
+
+font Medium
+{
+	fnt = zomboidMediumChinese.fnt,
+}
+
+font Large
+{
+	fnt = zomboidLargeChinese.fnt,
+}
+
+font Title
+{
+	fnt = zomboidLargeChinese.fnt,
+}
+

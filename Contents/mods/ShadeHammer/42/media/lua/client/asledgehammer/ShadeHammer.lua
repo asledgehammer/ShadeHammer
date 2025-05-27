@@ -21,7 +21,6 @@ function ShadeHammer.getOpenGLShader(path)
     local values = ArrayList.new(ShadeHammer.mapOpenGLShaders:values());
     for i = 0, values:size() - 1 do
         local value = values:get(i);
-        print(tostring(i) .. ': ' .. tostring(value))
         if value and string.find(tostring(value), path) then
             return value;
         end
@@ -62,19 +61,19 @@ attemptFetch = function()
     if not entry then return end
     ShadeHammer.mapOpenGLShaders = Reflect.getJavaFieldValue(entry, "ShaderMap");
 
-    print("### SHADER MAP FETCHED ###");
+    -- print("### SHADER MAP FETCHED ###");
 
     ShadeHammer.ScreenShader = {
         id = ShadeHammer.getOpenGLShaderID(ShadeHammer.PATH_WEATHER_SHADER),
         javaObject = ShadeHammer.getOpenGLShader(ShadeHammer.PATH_WEATHER_SHADER),
     };
 
-    info('\n' ..
-        'ScreenShader = {\n' ..
-        '\tid = ' .. tostring(ShadeHammer.ScreenShader.id) .. ',\n' ..
-        '\tjavaObject = ' .. tostring(ShadeHammer.ScreenShader.javaObject) .. ',\n' ..
-        '}'
-    );
+    -- info('\n' ..
+    --     'ScreenShader = {\n' ..
+    --     '\tid = ' .. tostring(ShadeHammer.ScreenShader.id) .. ',\n' ..
+    --     '\tjavaObject = ' .. tostring(ShadeHammer.ScreenShader.javaObject) .. ',\n' ..
+    --     '}'
+    -- );
 
     ShadeHammer.getOrLoadSkinnedShader('basicEffect');
     ShadeHammer.getOrLoadSkinnedShader('basicEffect_static');
@@ -91,9 +90,11 @@ ShadeHammer.shaders = {};
 
 --- @param name string
 function ShadeHammer.wrapSkinnedShader(name)
-    local model = loadZomboidModel('Dummy_Shader_Model', 'Vehicles_Wheel', 'Vehicles/vehicle_wheel', name, false);
+    local model = loadZomboidModel('Dummy_Shader_Model_' .. name, 'Vehicles_Wheel_' .. name, 'Vehicles/vehicle_wheel',
+    name, false);
     local shader = Reflect.getJavaFieldValue(model, 'Effect');
     local shaderName = Reflect.getJavaFieldValue(shader, 'name');
+    print('discovered shader\'s name: '.. shaderName);
     return LuaShader:new(shader, shaderName);
 end
 
@@ -114,16 +115,24 @@ end
 --- @param name string The name of the shader.
 function ShadeHammer.reloadSkinnedShader(name)
     if not isDebugEnabled() then
-        error('Cannot reload shader ' .. tostring(name) .. '. (Debug Mode not enabled)')
+        error(string.format('Cannot reload shader %s. (Debug Mode not enabled)', tostring(name)), 2);
     end
     local shader = ShadeHammer.shaders[name];
     if not shader then
-        print('WARNING: Shader not loaded or doesn\'t exist: ' .. tostring(name) .. '. Not reloading..');
+        print(string.format('WARNING: Shader not loaded or doesn\'t exist: %s (Not reloading)', tostring(name)), 2);
     end
     shader:reload();
 end
 
+function ShadeHammer.printShaders()
+    for k, v in pairs(ShadeHammer.shaders) do
+        print(string.format('%s: %s', k, tostring(v)));
+    end
+end
+
 _G.reloadShader = ShadeHammer.reloadSkinnedShader;
+
+_G.printShaders = ShadeHammer.printShaders;
 
 Events.OnRenderTick.Add(function()
     for _, shader in pairs(ShadeHammer.shaders) do

@@ -1,0 +1,97 @@
+VERSION = 1,
+
+font Code
+{
+	fnt = zomboidCode.fnt,
+	img = zomboidCode_0.png,
+}
+
+font Cred1
+{
+	fnt = zombiefontcredits1.fnt,
+	img = zombiefontcredits1_0.png,
+}
+
+font Cred2
+{
+	fnt = zombiefontcredits2.fnt,
+	img = zombiefontcredits2_0.png,
+}
+
+font Dialogue
+{
+	fnt = zomboidMedium.fnt,
+	img = zomboidMedium_0.png,
+}
+
+font Intro
+{
+	fnt = zomboidIntro.fnt,
+	img = zomboidIntro_0.png,
+}
+
+font Handwritten
+{
+	fnt = handwritten.fnt,
+	img = handwritten_0.png,
+}
+
+font MainMenu1
+{
+	fnt = mainfont.fnt,
+	img = mainfont_0.png,
+}
+
+font MainMenu2
+{
+	fnt = mainfont2.fnt,
+	img = mainfont2_0.png,
+}
+
+font Massive
+{
+	fnt = zombiefont5.fnt,
+	img = zombiefont5_0.png,
+}
+
+font NewSmall
+{
+	fnt = zomboidSmallThai.fnt,
+	img = zomboidSmallThai_0.png,
+}
+
+font NewMedium
+{
+	fnt = zomboidMediumThai.fnt,
+	img = zomboidMediumThai_0.png,
+}
+
+font NewLarge
+{
+	fnt = zomboidLargeThai.fnt,
+	img = zomboidLargeThai_0.png,
+}
+
+font Small
+{
+	fnt = zomboidSmallThai.fnt,
+	img = zomboidSmallThai_0.png,
+}
+
+font Medium
+{
+	fnt = zomboidMediumThai.fnt,
+	img = zomboidMediumThai_0.png,
+}
+
+font Large
+{
+	fnt = zomboidLargeThai.fnt,
+	img = zomboidLargeThai_0.png,
+}
+
+font Title
+{
+	fnt = zombiefontcredits1.fnt,
+	img = zombiefontcredits1_0.png,
+}

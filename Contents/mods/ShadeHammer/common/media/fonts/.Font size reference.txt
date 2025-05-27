@@ -1,0 +1,25 @@
+The following is a list of font export sizes for AngelCode's Bitmap Font Generator.
+make sure "Match char height" is NOT ticked
+
+default
+	small - 16 [make sure super sampling is off]
+	medium - 23
+	large - 26
+1x
+	small - 19
+	medium - 29
+	large - 33
+2x
+	small - 26
+	medium - 33
+	large - 40
+3x
+	small - 33
+	medium - 40
+	large - 45
+4x
+	small - 38
+	medium - 45
+	large - 50
+	
+~Fox Chaotica

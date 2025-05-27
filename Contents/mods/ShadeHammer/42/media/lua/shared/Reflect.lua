@@ -70,7 +70,7 @@ local function getAllJavaFieldValues(object)
 end
 
 --- @param object any
---- 
+---
 --- @return table<string, any>
 local function printJavaFields(object)
     local values = getAllJavaFieldValues(object);
@@ -118,6 +118,14 @@ local function getJavaMethods(object, methods)
     end
     return values;
 end
+
+_G.getJavaFieldValueExact = getJavaFieldValueExact;
+_G.getAllJavaFieldValues = getAllJavaFieldValues;
+_G.getJavaFieldValue = getJavaFieldValue;
+_G.getJavaFieldValues = getJavaFieldValues;
+_G.printJavaFields = printJavaFields;
+_G.getJavaMethod = getJavaMethod;
+_G.getJavaMethods = getJavaMethods;
 
 return {
     getJavaFieldValueExact = getJavaFieldValueExact,
