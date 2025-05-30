@@ -1,5 +1,13 @@
 local class = require 'asledgehammer/util/class';
 
+local LuaFont = require 'asledgehammer/shadehammer/LuaFont';
+local LuaFontRender = require 'asledgehammer/shadehammer/LuaFontRender';
+
+local BoxShadow = require 'asledgehammer/shadehammer/ui/BoxShadow';
+
+--- @type LuaFont
+local font = LuaFont('CodeLarge', 'media/fonts/codeLarge.fnt');
+
 -- Vector library --
 local vector = require 'asledgehammer/math/vector';
 local vec3 = vector.vec3;
@@ -49,8 +57,14 @@ local ShadeHammer = require 'asledgehammer/ShadeHammer';
 --- @field mat mat4
 --- @field lmat mat4
 ---
+--- @field boxShadow BoxShadow?
+---
 --- @field background boolean
 --- @field backgroundColor { r: number, g: number, b: number, a: number }
+---
+--- DEBUG
+--- @field textRender LuaFontRender
+--- @field text string
 ---
 --- @field onInit fun()
 local SHElement = class(function(o, x, y, width, height)
@@ -67,6 +81,8 @@ local SHElement = class(function(o, x, y, width, height)
 
     o.backgroundColor = { r = 1, g = 1, b = 1, a = 1 };
     o.background = true;
+
+    o.boxShadow = nil;
 
     o.posMat = mat4(1);
     o.rotMat = mat4(1);
@@ -133,6 +149,11 @@ end
 --- @param tick number
 function SHElement:updateTick(tick)
     self:updateTransform();
+
+    if self.boxShadow then
+        self.boxShadow:update(self);
+    end
+
     self:onUpdate();
     self:updateChildren(tick);
 end
@@ -145,9 +166,7 @@ function SHElement:prerender()
     -- Cannot render without the shader.
     if not shader then return end
 
-    shader:enable();
     self:onPreRender();
-    shader:disable();
 end
 
 function SHElement:render()
@@ -156,35 +175,68 @@ function SHElement:render()
     -- Cannot render without the shader.
     if not shader then return end
 
-    shader:enable();
     self:onRender();
-    shader:disable();
 end
 
-function SHElement:onPreRender() end
+function SHElement:onPreRender()
+    if self.boxShadow then
+        self.boxShadow:render();
+    end
+    self:renderBackground();
+end
+
+--- @param inset? boolean
+--- @param offsetX? number
+--- @param offsetY? number
+--- @param blur? number
+--- @param spread? number
+--- @param color? {r: number, g: number, b: number, a: number}
+function SHElement:createBoxShadow(inset, offsetX, offsetY, blur, spread, color)
+    inset = inset or false;
+    offsetX = offsetX or 0;
+    offsetY = offsetY or 0;
+    blur = blur or 0;
+    spread = spread or 0;
+    color = color or { r = 0, g = 0, b = 0, a = 1 };
+    self.boxShadow = BoxShadow(inset, offsetX, offsetY, blur, spread, color);
+end
 
 function SHElement:renderBackground()
+    local shader = self.shader;
+
+    if not shader then return end
+
     local color = self.backgroundColor;
-    local x1, y1 = 0, 0;
-    local x2, y2 = self.size.width, self.size.height;
+    local x1 = -self.rotationPivot.x * self.size.width;
+    local y1 = -self.rotationPivot.y * self.size.height;
+    local x2, y2 = x1 + self.size.width, y1 + self.size.height;
+
     local tlx, tly, trx, try, brx, bry, blx, bly = self:rotateQuad2D(x1, y1, x2, y1, x2, y2, x1, y2);
+
+    shader:enable();
+
+    shader:setUniforms({
+        UIColor = {color.r, color.g, color.b, color.a},
+        UITexture = 0
+    });
+
     renderer:render(
         nil, -- Texture
         tlx, tly,
         trx, try,
         brx, bry,
         blx, bly,
-        color.r, color.g, color.b, color.a,
-        color.r, color.g, color.b, color.a,
-        color.r, color.g, color.b, color.a,
-        color.r, color.g, color.b, color.a,
+        1, 1, 1, 1,
+        1, 1, 1, 1,
+        1, 1, 1, 1,
+        1, 1, 1, 1,
         nil -- RGBA
     );
+    
+    shader:disable();
 end
 
-function SHElement:onRender()
-    self:renderBackground();
-end
+function SHElement:onRender() end
 
 --- @param child SHElement
 function SHElement:addChild(child)
@@ -266,13 +318,6 @@ function SHElement:transformPoint3D(x, y, z)
     return point_2.x, point_2.y, point_2.z;
 end
 
-function SHElement:pivotAndTransform2D(x, y)
-    return self:transformPoint2D(
-        x - (self.rotationPivot.x * self.size.width),
-        y - (self.rotationPivot.y * self.size.height)
-    );
-end
-
 ---
 --- @param tlx number
 --- @param tly number
@@ -292,10 +337,10 @@ end
 --- @return number blx
 --- @return number bly
 function SHElement:rotateQuad2D(tlx, tly, trx, try, brx, bry, blx, bly)
-    tlx, tly = self:pivotAndTransform2D(tlx, tly);
-    trx, try = self:pivotAndTransform2D(trx, try);
-    brx, bry = self:pivotAndTransform2D(brx, bry);
-    blx, bly = self:pivotAndTransform2D(blx, bly);
+    tlx, tly = self:transformPoint2D(tlx, tly);
+    trx, try = self:transformPoint2D(trx, try);
+    brx, bry = self:transformPoint2D(brx, bry);
+    blx, bly = self:transformPoint2D(blx, bly);
     return tlx, tly, trx, try, brx, bry, blx, bly;
 end
 
@@ -358,15 +403,45 @@ Events.OnGameStart.Add(function()
     parent.backgroundColor.g = 0;
     parent.backgroundColor.b = 0;
 
+    parent.text = 'Hello, World!';
+    parent.textRender = font:drawString(parent.text, 0, 0);
+
+    parent.onUpdate = function(self)
+        self.rotation.z = self.rotation.z + 0.5;
+        if self.rotation.z > 360 then
+            self.rotation.z = self.rotation.z - 360;
+        end
+        if self.textRender:isChanged(self.mat) then
+            self.textRender = self.textRender:transform(self.mat);
+        end
+    end
+
+    parent.onRender = function(self)
+        self.textRender:render();
+    end
+
+    parent:createBoxShadow(false, 32, 32);
+
     local child = SHElement(200, 0, 64, 64);
     child.backgroundColor.r = 0;
     child.backgroundColor.g = 1;
     child.backgroundColor.b = 0;
 
     parent:addChild(child);
-
     parent:listen();
     parent:addToScreen();
 
     _G.debugElement = parent;
+
+
+    local reloadShadersButton = ISButton:new(64, 64, 128, 32, 'Reload Shaders', nil, function()
+        reloadShader('ShadeHammer');
+        reloadShader('ShadeHammer_BoxShadow');
+    end);
+    reloadShadersButton:addToUIManager();
+
+    local printShadersButton = ISButton:new(64, 80, 128, 32, 'Print Shaders', nil, function()
+        ShadeHammer.printShaders();
+    end);
+    printShadersButton:addToUIManager();
 end);

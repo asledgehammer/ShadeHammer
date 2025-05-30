@@ -134,6 +134,7 @@ function LuaShader:enable()
     -- Disable active shader if called before or while not disabling it.
     if __enabled_shader ~= nil then
         __enabled_shader:disable();
+        __enabled_shader = nil;
     end
 
     renderer:StartShader(self.id, 0);
@@ -144,8 +145,8 @@ end
 
 function LuaShader:disable()
     if not self.enabled then return end
-    renderer:EndShader();
     self.enabled = false;
+    renderer:EndShader();
     __enabled_shader = nil;
     pcall(function() self:onDisable() end);
 end
@@ -281,9 +282,9 @@ function LuaShader:__tostring()
     local b = '';
     for k, v in pairs(self.uniforms) do
         if b == '' then
-            b = b .. string.format('\t%s: %s', k, v.__type);
+            b = b .. string.format('\t%s: %s (location = %i)', k, v.__type, v.loc);
         else
-            b = b .. string.format(',\n\t%s: %s', k, v.__type);
+            b = b .. string.format(',\n\t%s: %s (location = %i)', k, v.__type, v.loc);
         end
     end
     return string.format(s, self.name, b);

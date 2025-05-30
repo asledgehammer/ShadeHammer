@@ -18,7 +18,6 @@ layout (location = 84) uniform bool userT3 = false;
 
 out vec4 vColor;
 out vec2 vUV;
-out mat4 transform;
 
 void main(void) {
 
@@ -28,7 +27,7 @@ void main(void) {
 		return;
 	}
 
-	transform = mat4(1);
+	mat4 transform = mat4(1);
 	transform[0][0] = transform1.x;
 	transform[0][1] = transform1.y;
 	transform[0][2] = transform1.z;

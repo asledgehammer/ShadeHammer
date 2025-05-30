@@ -3,44 +3,34 @@
 
 uniform float screenWidth;
 uniform float screenHeight;
-uniform float timer;
 uniform vec2 TextureSize;
-uniform float Zoom;
 uniform vec4 screenInfo;
 
-uniform vec4 UIColor = vec4(1.0, 0.0, 1.0, 1.0);
+uniform vec4 UIColor;
 uniform sampler2D DIFFUSE;
+uniform int UITexture = 0;
 
 uniform float u_saturation = 0.2;
-
-float saturation = u_saturation;
 
 in vec4 vColor;
 in vec2 vUV;
 
-float width = screenWidth;
-float height = screenHeight;
-
-const vec3 AvgLumin = vec3(0.4, 0.4, 0.4);
-
 //blur options:
 const float blur_pi = 6.28318530718; 	// Pi times 2
 const float blur_directions = 32.0; 	// def. 16.0 - higher number is more slow
-const float blur_quality = 3.0; 		// def. 3.0 - higher number is more slow
-const float blur_size = 12.0; 			// def. 8.0
 
 float fade(in float t) {
 	return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
 }
 
 vec4 cubic(float v) {
-    vec4 n = vec4(1.0, 2.0, 3.0, 4.0) - v;
-    vec4 s = n * n * n;
-    float x = s.x;
-    float y = s.y - 4.0 * s.x;
-    float z = s.z - 4.0 * s.y + 6.0 * s.x;
-    float w = 6.0 - x - y - z;
-    return vec4(x, y, z, w) * (1.0 / 6.0);
+	vec4 n = vec4(1.0, 2.0, 3.0, 4.0) - v;
+	vec4 s = n * n * n;
+	float x = s.x;
+	float y = s.y - 4.0 * s.x;
+	float z = s.z - 4.0 * s.y + 6.0 * s.x;
+	float w = 6.0 - x - y - z;
+	return vec4(x, y, z, w) * (1.0 / 6.0);
 }
 
 vec4 textureBicubic(sampler2D sampler, vec2 texCoords) {
@@ -70,23 +60,17 @@ vec4 textureBicubic(sampler2D sampler, vec2 texCoords) {
 	float sx = s.x / (s.x + s.y);
 	float sy = s.z / (s.z + s.w);
 
-	return mix(
-		mix(sample3, sample2, sx),
-		mix(sample1, sample0, sx),
-		sy);
+	return mix(mix(sample3, sample2, sx), mix(sample1, sample0, sx), sy);
 }
 
 vec4 sampleClamp2edge(sampler2D texture, vec2 uv) {
-	vec2 cuv = vec2(
-		clamp(uv.x, 0.00001, 0.99999),
-		clamp(uv.y, 0.00001, 0.99999)
-	);
+	vec2 cuv = vec2(clamp(uv.x, 0.00001, 0.99999), clamp(uv.y, 0.00001, 0.99999));
 	return texture2D(texture, cuv);
 }
 
 //blur outer regions SearchMode
 vec3 blur(in vec3 col, in float alpha, in float radius, in float quality) {
-    vec2 rad = radius / screenInfo.xy;
+	vec2 rad = radius / screenInfo.xy;
 	vec2 uv = vUV.st;
 	vec3 c = sampleClamp2edge(DIFFUSE, uv).rgb;
 	vec2 uv2;
@@ -107,7 +91,7 @@ vec3 blur(in vec3 col, in float alpha, in float radius, in float quality) {
 }
 
 float rand(vec2 co) {
-  return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453);
+	return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
 const float PI = 3.14159265359; 	// Pi
@@ -135,33 +119,33 @@ vec2 fade(vec2 t) {
 }
 
 vec4 mod289(vec4 x) {
-  return x - floor(x * (1.0 / 289.0)) * 289.0;
+	return x - floor(x * (1.0 / 289.0)) * 289.0;
 }
 
 vec3 mod289(vec3 x) {
-  return x - floor(x * (1.0 / 289.0)) * 289.0;
+	return x - floor(x * (1.0 / 289.0)) * 289.0;
 }
 
 vec2 mod289(vec2 x) {
-  return x - floor(x * (1.0 / 289.0)) * 289.0;
+	return x - floor(x * (1.0 / 289.0)) * 289.0;
 }
 
 float mod289(float x) {
-  return x - floor(x * (1.0 / 289.0)) * 289.0;
+	return x - floor(x * (1.0 / 289.0)) * 289.0;
 }
 
 float permute(float x) {
-  return mod289(((x * 34.0) + 1.0) * x);
+	return mod289(((x * 34.0) + 1.0) * x);
 }
 
 // Permutation polynomial (ring size 289 = 17*17)
 vec3 permute(vec3 x) {
-  return mod289(((x * 34.0) + 10.0) * x);
+	return mod289(((x * 34.0) + 10.0) * x);
 }
 
 // Permutation polynomial: (34x^2 + 6x) mod 289
 vec4 permute(vec4 x) {
-  return mod289((34.0 * x + 10.0) * x);
+	return mod289((34.0 * x + 10.0) * x);
 }
 
 float cnoise(vec2 P) {
@@ -177,12 +161,12 @@ float cnoise(vec2 P) {
 	vec4 gy = abs(gx) - 0.5;
 	vec4 tx = floor(gx + 0.5);
 	gx = gx - tx;
-	vec2 g00 = vec2(gx.x,gy.x);
-	vec2 g10 = vec2(gx.y,gy.y);
-	vec2 g01 = vec2(gx.z,gy.z);
-	vec2 g11 = vec2(gx.w,gy.w);
-	vec4 norm = 1.79284291400159 - 0.85373472095314 * 
-	  vec4(dot(g00, g00), dot(g01, g01), dot(g10, g10), dot(g11, g11));
+	vec2 g00 = vec2(gx.x, gy.x);
+	vec2 g10 = vec2(gx.y, gy.y);
+	vec2 g01 = vec2(gx.z, gy.z);
+	vec2 g11 = vec2(gx.w, gy.w);
+	vec4 norm = 1.79284291400159 - 0.85373472095314 *
+		vec4(dot(g00, g00), dot(g01, g01), dot(g10, g10), dot(g11, g11));
 	g00 *= norm.x;
 	g01 *= norm.y;
 	g10 *= norm.z;
@@ -198,21 +182,21 @@ float cnoise(vec2 P) {
 }
 
 float easeOutQuad(float x) {
-    return 1.0 - (1.0 - x) * (1.0 - x);
+	return 1.0 - (1.0 - x) * (1.0 - x);
 }
 
 float easeInQuad(float x) {
-    return x * x;
+	return x * x;
 }
 
 void main() {
-	// vec2 uv = vUV.st;
-	// float fade_alpha = 1.0;
-	// vec4 pixel4 = sampleClamp2edge(DIFFUSE, uv);
-	// gl_FragColor = pixel4;
-	// gl_FragColor.r *= UIColor.r;
-	// gl_FragColor.g *= UIColor.g;
-	// gl_FragColor.b *= UIColor.b;
-	// gl_FragColor.a *= UIColor.a;
-	gl_FragColor = vColor;
+
+	if (UITexture != 0) {
+		vec2 uv = vUV.st;
+		vec4 pixel4 = sampleClamp2edge(DIFFUSE, uv);
+		gl_FragColor = pixel4 * UIColor * vColor;
+	} else {
+		gl_FragColor = UIColor * vColor;
+	}
+
 }
