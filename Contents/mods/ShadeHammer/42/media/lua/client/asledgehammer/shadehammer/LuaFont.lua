@@ -241,9 +241,10 @@ local LuaFont = class(
 --- @param text string
 --- @param x number
 --- @param y number
+--- @param color SHColor
 ---
 --- @return LuaFontRender
-function LuaFont:drawString(text, x, y)
+function LuaFont:drawString(text, x, y, color)
     local chars = {};
     local width = 0;
     local height = 0;
@@ -280,10 +281,10 @@ function LuaFont:drawString(text, x, y)
                 y1 = cy,
                 x2 = cx + currDef.width,
                 y2 = cy + currDef.height,
-                r = 1,
-                g = 1,
-                b = 1,
-                a = 1
+                r = color.r,
+                g = color.g,
+                b = color.b,
+                a = color.a
             };
 
             table.insert(chars, char);

@@ -10,10 +10,26 @@ uniform vec4 UIColor;
 uniform sampler2D DIFFUSE;
 uniform int UITexture = 0;
 
-uniform float u_saturation = 0.2;
+uniform vec4 borderColorT;
+uniform vec4 borderColorL;
+uniform vec4 borderColorB;
+uniform vec4 borderColorR;
+uniform int borderSizeT;
+uniform int borderSizeL;
+uniform int borderSizeB;
+uniform int borderSizeR;
+uniform int borderRadiusTL;
+uniform int borderRadiusTR;
+uniform int borderRadiusBR;
+uniform int borderRadiusBL;
+
+uniform vec4 dim;
 
 in vec4 vColor;
 in vec2 vUV;
+
+in vec2 localUV;
+in vec2 localPosition;
 
 //blur options:
 const float blur_pi = 6.28318530718; 	// Pi times 2
@@ -96,6 +112,9 @@ float rand(vec2 co) {
 
 const float PI = 3.14159265359; 	// Pi
 const float PI2 = 6.28318530718; 	// Pi times 2
+const float PID2 = PI / 2.0; 	// Pi div 2
+const float PID4 = PI / 4.0; 	// Pi div 4
+const float PID8 = PI / 8.0; 	// Pi div 4
 
 float noise(vec2 p, float freq) {
 	float unit = screenWidth / freq;
@@ -181,22 +200,116 @@ float cnoise(vec2 P) {
 	return 2.3 * n_xy;
 }
 
-float easeOutQuad(float x) {
-	return 1.0 - (1.0 - x) * (1.0 - x);
+float roundedBoxSDF(vec2 center, vec2 size, float radius) {
+	return length(max(abs(center) - size + radius, 0.0)) - radius;
 }
 
-float easeInQuad(float x) {
-	return x * x;
+float edgeSoftness = 0.0;
+
+vec4 calcRoundAlpha(vec2 pixel, float width, float height, float radiusTL, float radiusTR, float radiusBR, float radiusBL) {
+
+	vec2 upperLeft = vec2(pixel.x, pixel.y);
+	float distanceTL = roundedBoxSDF(upperLeft, vec2(width, height), radiusTL);
+	float smoothedAlphaBottomRight = 1.0 - smoothstep(0.0, edgeSoftness * 2.0, distanceTL);
+
+	vec2 upperRight = vec2(width - pixel.x, pixel.y);
+	float distanceTR = roundedBoxSDF(upperRight, vec2(width, height), radiusTR);
+	float smoothedAlphaBottomLeft = 1.0 - smoothstep(0.0, edgeSoftness * 2.0, distanceTR);
+
+	vec2 bottomRight = vec2(pixel.x, height - pixel.y);
+	float distanceBR = roundedBoxSDF(bottomRight, vec2(width, height), radiusBR);
+	float smoothedAlphaTopRight = 1.0 - smoothstep(0.0, edgeSoftness * 2.0, distanceBR);
+
+	vec2 bottomLeft = vec2(width - pixel.x, height - pixel.y);
+	float distanceBL = roundedBoxSDF(bottomLeft, vec2(width, height), radiusBL);
+	float smoothedAlphaTopLeft = 1.0 - smoothstep(0.0, edgeSoftness * 2.0, distanceBL);
+
+	return vec4(smoothedAlphaBottomRight, smoothedAlphaBottomLeft, smoothedAlphaTopLeft, smoothedAlphaTopRight);
+}
+
+vec2 angleDirection = vec2(1.0, 0.0); // Positive x-axis
+float getAngleFromCorner(vec2 center, vec2 pixel) {
+	vec2 pixelFromCenter = pixel - center;
+	return acos(dot(normalize(pixelFromCenter), angleDirection));
 }
 
 void main() {
 
+	vec4 col;
 	if (UITexture != 0) {
-		vec2 uv = vUV.st;
-		vec4 pixel4 = sampleClamp2edge(DIFFUSE, uv);
-		gl_FragColor = pixel4 * UIColor * vColor;
+		col = sampleClamp2edge(DIFFUSE, vUV.st) * UIColor;
 	} else {
-		gl_FragColor = UIColor * vColor;
+		col = UIColor;
 	}
 
+	int borderInnerRadiusTL = max(0, borderRadiusTL - ((borderSizeT + borderSizeL) / 2));
+	int borderInnerRadiusTR = max(0, borderRadiusTR - ((borderSizeT + borderSizeR) / 2));
+	int borderInnerRadiusBR = max(0, borderRadiusBR - ((borderSizeB + borderSizeR) / 2));
+	int borderInnerRadiusBL = max(0, borderRadiusBL - ((borderSizeB + borderSizeL) / 2));
+
+	float width = round(dim.z - dim.x);
+	float height = round(dim.w - dim.y);
+	vec2 pixel = vec2(round(localUV.x * width), round(localUV.y * height));
+
+
+	// We then calculate colors for borders. (if defined)
+
+	float borderWidth = width - (borderSizeL + borderSizeR);
+	float borderHeight = height - (borderSizeT + borderSizeB);
+	vec4 borderRadiusAlpha = calcRoundAlpha(pixel, width, height, borderRadiusTL, borderRadiusTR, borderRadiusBR, borderRadiusBL);
+	vec4 borderAlpha = calcRoundAlpha(vec2(pixel.x - borderSizeL, pixel.y - borderSizeT), borderWidth, borderHeight, borderInnerRadiusTL, borderInnerRadiusTR, borderInnerRadiusBR, borderInnerRadiusBL);
+	float borderAlphaF = borderAlpha.x * borderAlpha.y * borderAlpha.z * borderAlpha.w;
+	if (borderAlphaF != 1) {
+
+		float distTop = max(0, -(pixel.y - borderSizeT));
+		float distLeft = max(0, -(pixel.x - borderSizeL));
+		float distBottom = max(0, pixel.y - (borderHeight - borderSizeB));
+		float distRight = max(0, pixel.x - (borderWidth + borderSizeR));
+
+		if (distTop > 0) {
+			if (distLeft > 0) {
+				if (distLeft > distTop) {
+					col = mix(borderColorL, col, borderAlphaF);
+				} else {
+					col = mix(borderColorT, col, borderAlphaF);
+				}
+			} else if (distRight > 0) {
+				if (distRight > distTop) {
+					col = mix(borderColorR, col, borderAlphaF);
+				} else {
+					col = mix(borderColorT, col, borderAlphaF);
+				}
+			} else {
+				col = mix(borderColorT, col, borderAlphaF);
+			}
+		} else if (distBottom > 0) {
+			if (distLeft > 0) {
+				if (distLeft > distBottom) {
+					col = mix(borderColorL, col, borderAlphaF);
+				} else {
+					col = mix(borderColorB, col, borderAlphaF);
+				}
+			} else if (distRight > 0) {
+				if (distRight > distBottom) {
+					col = mix(borderColorR, col, borderAlphaF);
+				} else {
+					col = mix(borderColorB, col, borderAlphaF);
+				}
+			} else {
+				col = mix(borderColorB, col, borderAlphaF);
+			}
+		} else if (distLeft > 0) {
+			col = mix(borderColorL, col, borderAlphaF);
+		} else if (distRight > 0) {
+			col = mix(borderColorR, col, borderAlphaF);
+		}
+	}
+
+	if ((borderRadiusAlpha.x * borderRadiusAlpha.y * borderRadiusAlpha.z * borderRadiusAlpha.w) == 0) {
+		discard;
+	}
+
+	gl_FragColor.a *= length(borderRadiusAlpha);
+
+	gl_FragColor = col;
 }

@@ -1,29 +1,6 @@
 require 'ISBaseObject';
 require 'asledgehammer/shadehammer/ShaderUniform';
 
---- @class LuaShader: ISBaseObject
---- @field uniforms table<string, LuaShaderUniform>
---- @field __index LuaShader
---- @field javaObject any
---- @field program any
---- @field name string
---- @field id number
---- @field timer number
---- @field loaded boolean
---- @field valid boolean
---- @field enabled boolean
---- @field load fun(self)
---- @field update fun(self)
---- @field reload fun(self)
---- @field onLoad fun(self)
---- @field enable fun(self)
---- @field disable fun(self)
---- @field onUpdate fun(self)
---- @field onEnable fun(self)
---- @field onDisable fun(self)
---- @field setUniform fun(self, name: string, arg1: LuaVector4f | Vector3f | LuaVector3f | Vector2f | LuaVector2f | Texture | number[] | number, arg2?: number, arg3?: number, arg4?: number): boolean
---- @field setUniforms fun(self, uniforms: table<string, LuaVector4f|Vector3f|LuaVector3f|Vector2f|LuaVector2f|table|number>)
-
 -- UTILS --
 local Reflect = require 'Reflect';
 
@@ -38,7 +15,17 @@ local camera0 = cameras:get(0);
 --- Keeps track of globally active shader.
 local __enabled_shader = nil;
 
---- @type LuaShader
+--- @class LuaShader: ISBaseObject
+--- @field uniforms table<string, LuaShaderUniform>
+--- @field __index LuaShader
+--- @field javaObject any
+--- @field program any
+--- @field name string
+--- @field id number
+--- @field timer number
+--- @field loaded boolean
+--- @field valid boolean
+--- @field enabled boolean
 LuaShader = ISBaseObject:derive('LuaShader');
 
 function LuaShader:load()
@@ -129,7 +116,7 @@ function LuaShader:update()
 end
 
 function LuaShader:enable()
-    if self.enabled then return end
+    if not self.valid or self.enabled then return end
 
     -- Disable active shader if called before or while not disabling it.
     if __enabled_shader ~= nil then
@@ -144,7 +131,7 @@ function LuaShader:enable()
 end
 
 function LuaShader:disable()
-    if not self.enabled then return end
+    if not self.valid or not self.enabled then return end
     self.enabled = false;
     renderer:EndShader();
     __enabled_shader = nil;
@@ -163,6 +150,8 @@ end
 ---
 --- @return boolean existsAndSet True if the uniform exists and is set.
 function LuaShader:setUniform(name, arg1, arg2, arg3, arg4)
+    if not self.valid or not self.enabled then return false end
+
     -- if self.name == 'ShadeHammer' then
     --     print(string.format('%s:setUniform(%s, %s %s %s %s)', self.name, name, tostring(arg1), tostring(arg2), tostring(arg3), tostring(arg4)));
     -- end
@@ -177,6 +166,8 @@ function LuaShader:setUniform(name, arg1, arg2, arg3, arg4)
 end
 
 function LuaShader:setUniforms(uniforms)
+    if not self.valid or not self.enabled then return false end
+
     for name, values in pairs(uniforms) do
         local uniform = self.uniforms[name];
         if uniform ~= nil then
@@ -242,6 +233,34 @@ function LuaShader:setUniforms(uniforms)
                 end
             end
         end
+    end
+end
+
+--- @param mat mat4
+function LuaShader:applyTransform(mat)
+    if not self.valid or not self.enabled then return false end
+
+    local t1 = self.uniforms.transform1;
+    local t2 = self.uniforms.transform2;
+    local t3 = self.uniforms.transform3;
+    local t4 = self.uniforms.transform4;
+    if t1 and t2 and t3 and t4 then
+        t1:set(mat.m00, mat.m01, mat.m02, mat.m03);
+        t2:set(mat.m10, mat.m11, mat.m12, mat.m13);
+        t3:set(mat.m20, mat.m21, mat.m22, mat.m23);
+        t4:set(mat.m30, mat.m31, mat.m32, mat.m33);
+    end
+end
+
+--- @param x number
+--- @param y number
+--- @param width number
+--- @param height number
+function LuaShader:applyDimension(x, y, width, height)
+    if not self.valid or not self.enabled then return false end
+
+    if self.uniforms.dim then
+        self.uniforms.dim:set(x, y, width, height);
     end
 end
 

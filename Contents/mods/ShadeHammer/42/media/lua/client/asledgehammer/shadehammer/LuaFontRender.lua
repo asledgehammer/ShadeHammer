@@ -31,20 +31,18 @@ local renderer = getRenderer();
 --- @field width number
 --- @field height number
 --- @field mat mat4?
---- @field chromaKey {r: number, g: number, b: number}
 local LuaFontRender = class(
 --- @param o LuaFontRender
 --- @param text string
 --- @param width number
 --- @param height number
 --- @param chars LuaFontRenderQuad[]
-    function(o, text, chars, width, height)
+    function(o, text, chars, width, height, color)
         o.type = 'LuaFontRender';
         o.text = text;
         o.chars = chars;
         o.width = width;
         o.height = height;
-        o.chromaKey = { r = 0, g = 0, b = 0 };
     end
 );
 
@@ -58,7 +56,7 @@ end
 local p1, p2, p3, p4, p5, p6, p7, p8 = vec4(), vec4(), vec4(), vec4(), vec4(), vec4(), vec4(), vec4();
 
 --- @param mat mat4
-function LuaFontRender:transform(mat)
+function LuaFontRender:transform(mat, color)
     --- @type LuaFontRender, LuaFontRenderQuad[]
     local render, charsSource;
 
@@ -111,11 +109,32 @@ function LuaFontRender:transform(mat)
     return render;
 end
 
-function LuaFontRender:render()
+--- @param shader LuaShader
+function LuaFontRender:render(shader)
+    if not shader.valid or not shader.enabled then return end
+
+    shader:enable();
+
+    if shader.uniforms.UITexture then
+        shader.uniforms.UITexture:set1i(1);
+    end
+
     for i = 1, #self.chars do
         local char = self.chars[i];
 
+        if shader.uniforms.DIFFUSE then
+            shader.uniforms.DIFFUSE:set1i(0);
+        end
+
+        renderer:glBind(char.texture:getID());
+
+        -- Set the color through the shader.
+        if shader.uniforms.UIColor then
+            shader.uniforms.UIColor:set4f(char.r, char.g, char.b, char.a);
+        end
+
         if char.type == '2D' then
+
             renderer:render(
                 char.texture,
                 -- Screen position
@@ -144,6 +163,10 @@ function LuaFontRender:render()
                 nil
             );
         end
+    end
+
+    if shader.uniforms.UITexture then
+        shader.uniforms.UITexture:set1i(0);
     end
 end
 

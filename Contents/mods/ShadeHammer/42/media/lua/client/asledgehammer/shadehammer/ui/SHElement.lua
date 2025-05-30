@@ -38,9 +38,145 @@ Events.OnTickEvenPaused.Add(function(tick)
     end
 end);
 
+--- @alias SHColor {r: number, g: number, b: number, a: number}
+
+
 -- Shader library --
 local ShadeHammer = require 'asledgehammer/ShadeHammer';
 -- -------------- --
+
+--- @class SHBorder
+---
+--- @field size number?
+--- @field sizeT number?
+--- @field sizeL number?
+--- @field sizeB number?
+--- @field sizeR number?
+---
+--- @field radius number?
+--- @field radiusTL number?
+--- @field radiusTR number?
+--- @field radiusBR number?
+--- @field radiusBL number?
+---
+--- @field color SHColor?
+--- @field colorT SHColor?
+--- @field colorL SHColor?
+--- @field colorB SHColor?
+--- @field colorR SHColor?
+local SHBorder = class(
+    function(o)
+        -- Size
+        o.size     = nil;
+        o.sizeT    = nil;
+        o.sizeL    = nil;
+        o.sizeB    = nil;
+        o.sizeR    = nil;
+
+        -- Radius
+        o.radius   = nil;
+        o.radiusTL = nil;
+        o.radiusTR = nil;
+        o.radiusBR = nil;
+        o.radiusBL = nil;
+
+        -- Color
+        o.color    = nil;
+        o.colorT   = nil;
+        o.colorL   = nil;
+        o.colorB   = nil;
+        o.colorR   = nil;
+    end
+);
+
+--- @param shader LuaShader
+function SHBorder:apply(shader)
+    if not shader.valid or not shader.enabled then return end
+
+    local size = self.size or 0;
+    local sizeT = self.sizeT or size;
+    local sizeL = self.sizeL or size;
+    local sizeB = self.sizeB or size;
+    local sizeR = self.sizeR or size;
+
+    local borderRadius = self.radius or 0;
+    local borderRadiusTL = self.radiusTL or borderRadius;
+    local borderRadiusTR = self.radiusTR or borderRadius;
+    local borderRadiusBR = self.radiusBR or borderRadius;
+    local borderRadiusBL = self.radiusBL or borderRadius;
+
+    local borderColor = { 0, 0, 0, 1 };
+    if self.color then
+        borderColor = { self.color.r, self.color.g, self.color.b, self.color.a };
+    end
+
+    local borderColorT = borderColor;
+    if self.colorT then
+        borderColorT = { self.colorT.r, self.colorT.g, self.colorT.b, self.colorT.a };
+    end
+
+    local borderColorL = borderColor;
+    if self.colorL then
+        borderColorL = { self.colorL.r, self.colorL.g, self.colorL.b, self.colorL.a };
+    end
+
+    local borderColorB = borderColor;
+    if self.colorB then
+        borderColorB = { self.colorB.r, self.colorB.g, self.colorB.b, self.colorB.a };
+    end
+
+    local borderColorR = borderColor;
+    if self.colorR then
+        borderColorR = { self.colorR.r, self.colorR.g, self.colorR.b, self.colorR.a };
+    end
+
+    shader:setUniforms({
+        -- Size
+        borderSizeT    = sizeT,
+        borderSizeL    = sizeL,
+        borderSizeB    = sizeB,
+        borderSizeR    = sizeR,
+
+        -- Radius
+        borderRadiusTL = borderRadiusTL,
+        borderRadiusTR = borderRadiusTR,
+        borderRadiusBR = borderRadiusBR,
+        borderRadiusBL = borderRadiusBL,
+
+        -- Color
+        borderColorT   = borderColorT,
+        borderColorL   = borderColorL,
+        borderColorB   = borderColorB,
+        borderColorR   = borderColorR
+    });
+end
+
+--- @param shader LuaShader
+function SHBorder:reset(shader)
+    if not shader.valid or not shader.enabled then return end
+
+    local color = { 0, 0, 0, 0 };
+
+    shader:setUniforms({
+        -- Size
+        borderSizeT = 0,
+        borderSizeL = 0,
+        borderSizeB = 0,
+        borderSizeR = 0,
+
+        -- Radius
+        borderRadiusTL = 0,
+        borderRadiusTR = 0,
+        borderRadiusBR = 0,
+        borderRadiusBL = 0,
+
+        -- Color
+        borderColorT = color,
+        borderColorL = color,
+        borderColorB = color,
+        borderColorR = color
+    });
+end
 
 --- @class SHElement
 --- @field uuid string
@@ -56,6 +192,7 @@ local ShadeHammer = require 'asledgehammer/ShadeHammer';
 --- @field scale vec3
 --- @field mat mat4
 --- @field lmat mat4
+--- @field border SHBorder
 ---
 --- @field boxShadow BoxShadow?
 ---
@@ -79,9 +216,12 @@ local SHElement = class(function(o, x, y, width, height)
     o.rotationPivot = vec3(0.5, 0.5, 0.5);
     o.scale = vec3(1);
 
+    o.color = { r = 0, g = 0, b = 0, a = 1 };
+
     o.backgroundColor = { r = 1, g = 1, b = 1, a = 1 };
     o.background = true;
 
+    o.border = SHBorder();
     o.boxShadow = nil;
 
     o.posMat = mat4(1);
@@ -214,9 +354,12 @@ function SHElement:renderBackground()
     local tlx, tly, trx, try, brx, bry, blx, bly = self:rotateQuad2D(x1, y1, x2, y1, x2, y2, x1, y2);
 
     shader:enable();
+    self.border:apply(shader);
+    shader:applyDimension(x1, y1, x2, y2);
+    shader:applyTransform(self.mat);
 
     shader:setUniforms({
-        UIColor = {color.r, color.g, color.b, color.a},
+        UIColor = { color.r, color.g, color.b, color.a },
         UITexture = 0
     });
 
@@ -226,13 +369,14 @@ function SHElement:renderBackground()
         trx, try,
         brx, bry,
         blx, bly,
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-        1, 1, 1, 1,
-        1, 1, 1, 1,
+        x1, y1, 0, 0,
+        x2, y1, 0, 0,
+        x2, y2, 0, 0,
+        x1, y2, 0, 0,
         nil -- RGBA
     );
-    
+
+    self.border:reset(shader);
     shader:disable();
 end
 
@@ -404,20 +548,22 @@ Events.OnGameStart.Add(function()
     parent.backgroundColor.b = 0;
 
     parent.text = 'Hello, World!';
-    parent.textRender = font:drawString(parent.text, 0, 0);
+    parent.textRender = font:drawString(parent.text, 0, 0, {r = 1, g = 1, b = 1, a = 1});
 
     parent.onUpdate = function(self)
-        self.rotation.z = self.rotation.z + 0.5;
-        if self.rotation.z > 360 then
-            self.rotation.z = self.rotation.z - 360;
-        end
+        -- self.rotation.z = self.rotation.z + 0.5;
+        -- if self.rotation.z > 360 then
+        --     self.rotation.z = self.rotation.z - 360;
+        -- end
         if self.textRender:isChanged(self.mat) then
             self.textRender = self.textRender:transform(self.mat);
         end
     end
 
     parent.onRender = function(self)
-        self.textRender:render();
+        self.shader:enable();
+        self.textRender:render(self.shader);
+        self.shader:disable();
     end
 
     parent:createBoxShadow(false, 32, 32);
