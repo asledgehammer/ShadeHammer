@@ -200,37 +200,24 @@ float cnoise(vec2 P) {
 	return 2.3 * n_xy;
 }
 
-float roundedBoxSDF(vec2 center, vec2 size, float radius) {
-	return length(max(abs(center) - size + radius, 0.0)) - radius;
-}
-
-float edgeSoftness = 0.0;
-
-vec4 calcRoundAlpha(vec2 pixel, float width, float height, float radiusTL, float radiusTR, float radiusBR, float radiusBL) {
-
-	vec2 upperLeft = vec2(pixel.x, pixel.y);
-	float distanceTL = roundedBoxSDF(upperLeft, vec2(width, height), radiusTL);
-	float smoothedAlphaBottomRight = 1.0 - smoothstep(0.0, edgeSoftness * 2.0, distanceTL);
-
-	vec2 upperRight = vec2(width - pixel.x, pixel.y);
-	float distanceTR = roundedBoxSDF(upperRight, vec2(width, height), radiusTR);
-	float smoothedAlphaBottomLeft = 1.0 - smoothstep(0.0, edgeSoftness * 2.0, distanceTR);
-
-	vec2 bottomRight = vec2(pixel.x, height - pixel.y);
-	float distanceBR = roundedBoxSDF(bottomRight, vec2(width, height), radiusBR);
-	float smoothedAlphaTopRight = 1.0 - smoothstep(0.0, edgeSoftness * 2.0, distanceBR);
-
-	vec2 bottomLeft = vec2(width - pixel.x, height - pixel.y);
-	float distanceBL = roundedBoxSDF(bottomLeft, vec2(width, height), radiusBL);
-	float smoothedAlphaTopLeft = 1.0 - smoothstep(0.0, edgeSoftness * 2.0, distanceBL);
-
-	return vec4(smoothedAlphaBottomRight, smoothedAlphaBottomLeft, smoothedAlphaTopLeft, smoothedAlphaTopRight);
-}
-
 vec2 angleDirection = vec2(1.0, 0.0); // Positive x-axis
 float getAngleFromCorner(vec2 center, vec2 pixel) {
 	vec2 pixelFromCenter = pixel - center;
 	return acos(dot(normalize(pixelFromCenter), angleDirection));
+}
+
+float roundedBoxSDF(vec2 center, vec2 size, float radius) {
+	return length(max(abs(center) - size + radius, 0.0)) - radius;
+}
+
+float doThing(vec2 pixel, vec2 size, float radius, float softness) {
+	if (softness == 0) {
+		float distance = roundedBoxSDF(pixel - (size / 2.0), size / 2.0, 0);
+		return 1.0 - smoothstep(0.0, min(radius, 1.0), distance);
+	} else {
+		float distance = roundedBoxSDF(pixel - (size / 2.0), size / 2.0, radius);
+		return 1.0 - smoothstep(0.0, min(radius * softness, 1.0) * 2.0, distance);
+	}
 }
 
 void main() {
@@ -238,78 +225,160 @@ void main() {
 	vec4 col;
 	if (UITexture != 0) {
 		col = sampleClamp2edge(DIFFUSE, vUV.st) * UIColor;
+		gl_FragColor = col;
+		return;
 	} else {
 		col = UIColor;
 	}
 
-	int borderInnerRadiusTL = max(0, borderRadiusTL - ((borderSizeT + borderSizeL) / 2));
-	int borderInnerRadiusTR = max(0, borderRadiusTR - ((borderSizeT + borderSizeR) / 2));
-	int borderInnerRadiusBR = max(0, borderRadiusBR - ((borderSizeB + borderSizeR) / 2));
-	int borderInnerRadiusBL = max(0, borderRadiusBL - ((borderSizeB + borderSizeL) / 2));
+	float bSizeT = borderSizeT != 0.0 ? borderSizeT : 0.0;
+	float bSizeL = borderSizeT != 0.0 ? borderSizeL : 0.0;
+	float bSizeB = borderSizeT != 0.0 ? borderSizeB : 0.0;
+	float bSizeR = borderSizeT != 0.0 ? borderSizeR : 0.0;
 
-	float width = round(dim.z - dim.x);
-	float height = round(dim.w - dim.y);
-	vec2 pixel = vec2(round(localUV.x * width), round(localUV.y * height));
+	vec2 size = vec2(round(dim.z - dim.x), round(dim.w - dim.y));
+	vec2 pixel = vec2(round(localUV.x * size.x), round(localUV.y * size.y));
 
+	vec2 sizeBase = size - round(vec2(bSizeL + bSizeR, bSizeT + bSizeB));
+	vec2 pixelBase = round(pixel - vec2(bSizeL, bSizeT));
 
-	// We then calculate colors for borders. (if defined)
+	vec4 baseColor;
+	vec4 borderColor = vec4(1, 1, 0, 1);
 
-	float borderWidth = width - (borderSizeL + borderSizeR);
-	float borderHeight = height - (borderSizeT + borderSizeB);
-	vec4 borderRadiusAlpha = calcRoundAlpha(pixel, width, height, borderRadiusTL, borderRadiusTR, borderRadiusBR, borderRadiusBL);
-	vec4 borderAlpha = calcRoundAlpha(vec2(pixel.x - borderSizeL, pixel.y - borderSizeT), borderWidth, borderHeight, borderInnerRadiusTL, borderInnerRadiusTR, borderInnerRadiusBR, borderInnerRadiusBL);
-	float borderAlphaF = borderAlpha.x * borderAlpha.y * borderAlpha.z * borderAlpha.w;
-	if (borderAlphaF != 1) {
+	float temp = (borderRadiusTL * 2.0) + ((borderSizeT + borderSizeL) / 2);
+	vec2 bTL = vec2(temp, temp);
+	vec2 bTR = vec2(size.x - ((borderRadiusTR * 2.0) + ((borderSizeT + borderSizeR) / 2)), (borderRadiusTL * 2.0) + ((borderSizeT + borderSizeL) / 2));
+	vec2 bBL = vec2((borderRadiusBL * 2.0) + ((borderSizeB + borderSizeL) / 2), size.y - ((borderRadiusBL * 2.0) + ((borderSizeB + borderSizeL) / 2)));
+	vec2 bBR = vec2(size.x - ((borderRadiusBR * 2.0) + ((borderSizeB + borderSizeR) / 2)), size.y - ((borderRadiusBR * 2.0) + ((borderSizeB + borderSizeR) / 2)));
 
-		float distTop = max(0, -(pixel.y - borderSizeT));
-		float distLeft = max(0, -(pixel.x - borderSizeL));
-		float distBottom = max(0, pixel.y - (borderHeight - borderSizeB));
-		float distRight = max(0, pixel.x - (borderWidth + borderSizeR));
-
-		if (distTop > 0) {
-			if (distLeft > 0) {
-				if (distLeft > distTop) {
-					col = mix(borderColorL, col, borderAlphaF);
-				} else {
-					col = mix(borderColorT, col, borderAlphaF);
-				}
-			} else if (distRight > 0) {
-				if (distRight > distTop) {
-					col = mix(borderColorR, col, borderAlphaF);
-				} else {
-					col = mix(borderColorT, col, borderAlphaF);
-				}
-			} else {
-				col = mix(borderColorT, col, borderAlphaF);
+	if (pixel.y < bTL.y) {
+		if (pixel.x < bTL.x) { // Top-Left
+			vec2 diff = normalize(pixel - bTL);
+			float angle = atan(diff.y, diff.x);
+			if (angle > PID4 * -3) { // Top-Left-Top
+				borderColor = borderColorT;
+			} else { // Top-Left-Left
+				borderColor = borderColorL;
 			}
-		} else if (distBottom > 0) {
-			if (distLeft > 0) {
-				if (distLeft > distBottom) {
-					col = mix(borderColorL, col, borderAlphaF);
-				} else {
-					col = mix(borderColorB, col, borderAlphaF);
-				}
-			} else if (distRight > 0) {
-				if (distRight > distBottom) {
-					col = mix(borderColorR, col, borderAlphaF);
-				} else {
-					col = mix(borderColorB, col, borderAlphaF);
-				}
-			} else {
-				col = mix(borderColorB, col, borderAlphaF);
+		} else if (pixel.x > bTR.x) { // Top-Right
+			borderColor = vec4(1, 1, 0.5, 1);
+			vec2 diff = normalize(pixel - bTR);
+			float angle = atan(diff.y, diff.x);
+			if (angle > PID4 * -1) { // Top-Right-Right
+				borderColor = borderColorR;
+			} else { // Top-Right-Top
+				borderColor = borderColorT;
 			}
-		} else if (distLeft > 0) {
-			col = mix(borderColorL, col, borderAlphaF);
-		} else if (distRight > 0) {
-			col = mix(borderColorR, col, borderAlphaF);
+		} else { // Top
+			borderColor = borderColorT;
+		}
+	} else if (pixel.y > bBL.y) { // Bottom
+		if (pixel.x < bBL.x) { // Bottom-Left
+			vec2 diff = normalize(pixel - bBL);
+			float angle = atan(diff.y, diff.x);
+			if (angle > PID4 * 3) {
+				borderColor = borderColorL;
+			} else {
+				borderColor = borderColorB;
+			}
+		} else if (pixel.x > bBR.x) { // Top-Right
+			vec2 diff = normalize(pixel - bBR);
+			float angle = atan(diff.y, diff.x);
+			if (angle < PID4 * 1) {
+				borderColor = borderColorR;
+			} else {
+				borderColor = borderColorB;
+			}
+		} else {
+			borderColor = borderColorB;
+		}
+	} else if (pixel.x < borderSizeL) {
+		borderColor = borderColorL;
+	} else if (pixel.x > size.x - borderSizeR) {
+		borderColor = borderColorR;
+	} else {
+		borderColor = borderColorB;
+	}
+
+	float borderRadiusInnerTL = max(borderRadiusTL - round((bSizeT + bSizeL) / 2.0), 0);
+	float borderRadiusInnerTR = max(borderRadiusTR - round((bSizeT + bSizeR) / 2.0), 0);
+	float borderRadiusInnerBL = max(borderRadiusBL - round((bSizeB + bSizeL) / 2.0), 0);
+	float borderRadiusInnerBR = max(borderRadiusBR - round((bSizeB + bSizeR) / 2.0), 0);
+
+	if (localUV.x < 0.5) {
+		if (localUV.y < 0.5) {
+
+			vec2 diff = normalize(pixel - vec2(borderRadiusTL, borderRadiusTL));
+			float angle = atan(diff.y, diff.x);
+
+			float smoothnessAngle = 0.0;
+			if (pixel.x < borderRadiusTL - 1 && pixel.y < borderRadiusTL - 1) {
+				smoothnessAngle = min(abs(cos(angle)), abs(sin(angle)));
+				smoothnessAngle *= smoothnessAngle;
+			}
+
+			float alpha = doThing(pixelBase, sizeBase, borderRadiusInnerTL, smoothnessAngle);
+			float alphaBorder = doThing(pixel, size, borderRadiusTL, smoothnessAngle);
+			vec4 quadColor = vec4(col.rgb, alpha);
+			vec4 quadColor2 = vec4(borderColor.rgb, borderColor.a * alphaBorder);
+			baseColor = mix(quadColor2, quadColor, alpha);
+			baseColor.a = max(alpha, alphaBorder);
+		} else {
+
+			vec2 diff = normalize(pixel - vec2(borderRadiusBL, borderRadiusBL));
+			float angle = atan(diff.y, diff.x);
+
+			// float angle = getAngleFromCorner(vec2(borderRadiusTL, borderRadiusTL), pixel);
+			float smoothnessAngle = 0.0;
+			if (pixel.x < borderRadiusBL - 1 && pixel.y >= (size.y - borderRadiusBL) + 1) {
+				smoothnessAngle = min(abs(cos(angle)), abs(sin(angle)));
+				smoothnessAngle *= smoothnessAngle;
+			}
+
+			float alpha = doThing(pixelBase, sizeBase, borderRadiusInnerBL, smoothnessAngle);
+			float alphaBorder = doThing(pixel, size, borderRadiusBL, smoothnessAngle);
+			vec4 quadColor = vec4(col.rgb, alpha);
+			vec4 quadColor2 = vec4(borderColor.rgb, borderColor.a * alphaBorder);
+			baseColor = mix(quadColor2, quadColor, alpha);
+			baseColor.a = max(alpha, alphaBorder);
+		}
+	} else {
+		if (localUV.y < 0.5) {
+
+			vec2 diff = normalize(pixel - vec2(borderRadiusTR, borderRadiusTR));
+			float angle = atan(diff.y, diff.x);
+
+			float smoothnessAngle = 0.0;
+			if (pixel.x >= (size.x - borderRadiusTR) + 1 && pixel.y < borderRadiusTR - 1) {
+				smoothnessAngle = min(abs(cos(angle)), abs(sin(angle)));
+				smoothnessAngle *= smoothnessAngle;
+			}
+
+			float alpha = doThing(pixelBase, sizeBase, borderRadiusInnerTR, smoothnessAngle);
+			float alphaBorder = doThing(pixel, size, borderRadiusTR, smoothnessAngle);
+			vec4 quadColor = vec4(col.rgb, alpha);
+			vec4 quadColor2 = vec4(borderColor.rgb, borderColor.a * alphaBorder);
+			baseColor = mix(quadColor2, quadColor, alpha);
+			baseColor.a = max(alpha, alphaBorder);
+		} else {
+
+			vec2 diff = normalize(pixel - vec2(borderRadiusBR, borderRadiusBR));
+			float angle = atan(diff.y, diff.x);
+
+			float smoothnessAngle = 0.0;
+			if (pixel.x >= (size.x - borderRadiusTR) + 1 && pixel.y >= (size.y - borderRadiusBR) + 1) {
+				smoothnessAngle = min(abs(cos(angle)), abs(sin(angle)));
+				smoothnessAngle *= smoothnessAngle;
+			}
+
+			float alpha = doThing(pixelBase, sizeBase, borderRadiusInnerBR, smoothnessAngle);
+			float alphaBorder = doThing(pixel, size, borderRadiusTR, smoothnessAngle);
+			vec4 quadColor = vec4(col.rgb, alpha);
+			vec4 quadColor2 = vec4(borderColor.rgb, borderColor.a * alphaBorder);
+			baseColor = mix(quadColor2, quadColor, alpha);
+			baseColor.a = max(alpha, alphaBorder);
 		}
 	}
 
-	if ((borderRadiusAlpha.x * borderRadiusAlpha.y * borderRadiusAlpha.z * borderRadiusAlpha.w) == 0) {
-		discard;
-	}
-
-	gl_FragColor.a *= length(borderRadiusAlpha);
-
-	gl_FragColor = col;
+	gl_FragColor = baseColor;
 }
