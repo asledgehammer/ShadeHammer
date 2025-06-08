@@ -123,14 +123,14 @@ function LuaFontRender:render(shader)
         local char = self.chars[i];
 
         if shader.uniforms.DIFFUSE then
-            shader.uniforms.DIFFUSE:set1i(0);
+            shader.uniforms.DIFFUSE:setTexture(0);
         end
 
         renderer:glBind(char.texture:getID());
 
         -- Set the color through the shader.
         if shader.uniforms.UIColor then
-            shader.uniforms.UIColor:set4f(char.r, char.g, char.b, char.a);
+            shader.uniforms.UIColor:setRGBA(char);
         end
 
         if char.type == '2D' then

@@ -29,9 +29,8 @@ void main(void) {
 
 	gl_Position = ModelViewProjection * pos4;
 
-	localPosition = aColor.xy;
+	localPosition = aColor.xy;// - vec2(4, 4);
 	localUV = vec2(clamp(lerp(dim.x, dim.z, localPosition.x), 0, 1), clamp(lerp(dim.y, dim.w, localPosition.y), 0, 1));
-
-	vColor = vec4(1,1,1,1);
+	vColor = vec4(1, 1, 1, 1);
 	vUV = aUV;
 }

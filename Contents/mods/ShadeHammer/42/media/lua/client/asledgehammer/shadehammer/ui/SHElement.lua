@@ -89,94 +89,78 @@ local SHBorder = class(
     end
 );
 
+local COLOR_TRANSPARENT = { r = 0, g = 0, b = 0, a = 0 };
+
+--- @param element SHElement
 --- @param shader LuaShader
-function SHBorder:apply(shader)
+function SHBorder:apply(element, shader)
     if not shader.valid or not shader.enabled then return end
+    local uniforms = shader.uniforms;
 
-    local size = self.size or 0;
-    local sizeT = self.sizeT or size;
-    local sizeL = self.sizeL or size;
-    local sizeB = self.sizeB or size;
-    local sizeR = self.sizeR or size;
-
-    local borderRadius = self.radius or 0;
-    local borderRadiusTL = self.radiusTL or borderRadius;
-    local borderRadiusTR = self.radiusTR or borderRadius;
-    local borderRadiusBR = self.radiusBR or borderRadius;
-    local borderRadiusBL = self.radiusBL or borderRadius;
-
-    local borderColor = { 0, 0, 0, 1 };
-    if self.color then
-        borderColor = { self.color.r, self.color.g, self.color.b, self.color.a };
+    if uniforms.borderColorT then
+        uniforms.borderColorT:setRGBA(self.colorT or self.color or element.backgroundColor or COLOR_TRANSPARENT);
+    end
+    if uniforms.borderColorL then
+        uniforms.borderColorL:setRGBA(self.colorL or self.color or element.backgroundColor or COLOR_TRANSPARENT);
+    end
+    if uniforms.borderColorB then
+        uniforms.borderColorB:setRGBA(self.colorB or self.color or element.backgroundColor or COLOR_TRANSPARENT)
+    end
+    if uniforms.borderColorR then
+        uniforms.borderColorR:setRGBA(self.colorR or self.color or element.backgroundColor or COLOR_TRANSPARENT);
     end
 
-    local borderColorT = borderColor;
-    if self.colorT then
-        borderColorT = { self.colorT.r, self.colorT.g, self.colorT.b, self.colorT.a };
+    if uniforms.borderRadiusTL then
+        uniforms.borderRadiusTL:set1i(self.radiusTL or self.radius or 0.0);
+    end
+    if uniforms.borderRadiusTR then
+        uniforms.borderRadiusTR:set1i(self.radiusTR or self.radius or 0.0);
+    end
+    if uniforms.borderRadiusBR then
+        uniforms.borderRadiusBR:set1i(self.radiusBR or self.radius or 0.0);
+    end
+    if uniforms.borderRadiusBL then
+        uniforms.borderRadiusBL:set1i(self.radiusBL or self.radius or 0.0);
     end
 
-    local borderColorL = borderColor;
-    if self.colorL then
-        borderColorL = { self.colorL.r, self.colorL.g, self.colorL.b, self.colorL.a };
+    if uniforms.borderSizeT then
+        uniforms.borderSizeT:set1i(self.sizeT or self.size or 0);
     end
-
-    local borderColorB = borderColor;
-    if self.colorB then
-        borderColorB = { self.colorB.r, self.colorB.g, self.colorB.b, self.colorB.a };
+    if uniforms.borderSizeL then
+        uniforms.borderSizeL:set1i(self.sizeL or self.size or 0);
     end
-
-    local borderColorR = borderColor;
-    if self.colorR then
-        borderColorR = { self.colorR.r, self.colorR.g, self.colorR.b, self.colorR.a };
+    if uniforms.borderSizeB then
+        uniforms.borderSizeB:set1i(self.sizeB or self.size or 0);
     end
-
-    shader:setUniforms({
-        -- Size
-        borderSizeT    = sizeT,
-        borderSizeL    = sizeL,
-        borderSizeB    = sizeB,
-        borderSizeR    = sizeR,
-
-        -- Radius
-        borderRadiusTL = borderRadiusTL,
-        borderRadiusTR = borderRadiusTR,
-        borderRadiusBR = borderRadiusBR,
-        borderRadiusBL = borderRadiusBL,
-
-        -- Color
-        borderColorT   = borderColorT,
-        borderColorL   = borderColorL,
-        borderColorB   = borderColorB,
-        borderColorR   = borderColorR
-    });
+    if uniforms.borderSizeR then
+        uniforms.borderSizeR:set1i(self.sizeR or self.size or 0);
+    end
 end
 
 --- @param shader LuaShader
 function SHBorder:reset(shader)
     if not shader.valid or not shader.enabled then return end
-
-    local color = { 0, 0, 0, 0 };
-
-    shader:setUniforms({
-        -- Size
-        borderSizeT = 0,
-        borderSizeL = 0,
-        borderSizeB = 0,
-        borderSizeR = 0,
-
-        -- Radius
-        borderRadiusTL = 0,
-        borderRadiusTR = 0,
-        borderRadiusBR = 0,
-        borderRadiusBL = 0,
-
-        -- Color
-        borderColorT = color,
-        borderColorL = color,
-        borderColorB = color,
-        borderColorR = color
-    });
+    local uniforms = shader.uniforms;
+    if uniforms.borderColorT then uniforms.borderColorT:setRGBA(COLOR_TRANSPARENT) end
+    if uniforms.borderColorL then uniforms.borderColorL:setRGBA(COLOR_TRANSPARENT) end
+    if uniforms.borderColorB then uniforms.borderColorB:setRGBA(COLOR_TRANSPARENT) end
+    if uniforms.borderColorR then uniforms.borderColorR:setRGBA(COLOR_TRANSPARENT) end
+    if uniforms.borderRadiusTL then uniforms.borderRadiusTL:set1i(0) end
+    if uniforms.borderRadiusTR then uniforms.borderRadiusTR:set1i(0) end
+    if uniforms.borderRadiusBR then uniforms.borderRadiusBR:set1i(0) end
+    if uniforms.borderRadiusBL then uniforms.borderRadiusBL:set1i(0) end
+    if uniforms.borderSizeT then uniforms.borderSizeT:set1i(0) end
+    if uniforms.borderSizeL then uniforms.borderSizeL:set1i(0) end
+    if uniforms.borderSizeB then uniforms.borderSizeB:set1i(0) end
+    if uniforms.borderSizeR then uniforms.borderSizeR:set1i(0) end
+    if uniforms.bBorder then uniforms.bBorder:setBoolean(false) end
 end
+
+--- @class SHStyle
+local SHStyle = class(function(o)
+
+end);
+
 
 --- @class SHElement
 --- @field uuid string
@@ -194,7 +178,7 @@ end
 --- @field lmat mat4
 --- @field border SHBorder
 ---
---- @field boxShadow BoxShadow?
+--- @field boxShadow BoxShadow[]
 ---
 --- @field background boolean
 --- @field backgroundColor { r: number, g: number, b: number, a: number }
@@ -202,6 +186,7 @@ end
 --- DEBUG
 --- @field textRender LuaFontRender
 --- @field text string
+--- @field RENDER_PADDING number
 ---
 --- @field onInit fun()
 local SHElement = class(function(o, x, y, width, height)
@@ -222,7 +207,7 @@ local SHElement = class(function(o, x, y, width, height)
     o.background = true;
 
     o.border = SHBorder();
-    o.boxShadow = nil;
+    o.boxShadow = {};
 
     o.posMat = mat4(1);
     o.rotMat = mat4(1);
@@ -230,6 +215,8 @@ local SHElement = class(function(o, x, y, width, height)
     o.mat = mat4(1);
     o.lmat = mat4(1);
 end);
+
+SHElement.RENDER_PADDING = 4;
 
 function SHElement:listen()
     elements[self.uuid] = self;
@@ -290,8 +277,12 @@ end
 function SHElement:updateTick(tick)
     self:updateTransform();
 
-    if self.boxShadow then
-        self.boxShadow:update(self);
+    -- Update all box-shadows.
+    local boxShadowCount = #self.boxShadow;
+    if boxShadowCount ~= 0 then
+        for i = 1, boxShadowCount do
+            self.boxShadow[i]:update(self);
+        end
     end
 
     self:onUpdate();
@@ -319,10 +310,31 @@ function SHElement:render()
 end
 
 function SHElement:onPreRender()
-    if self.boxShadow then
-        self.boxShadow:render();
+    local boxShadowCount = #self.boxShadow;
+
+    -- Only render outset box-shadows before the background layer.
+    if boxShadowCount ~= 0 then
+        for i = 1, boxShadowCount do
+            local boxShadow = self.boxShadow[i];
+            if not boxShadow.inset then
+                boxShadow:render(self);
+            end
+        end
     end
+
     self:renderBackground();
+
+    -- Only render inset box-shadows after the background layer.
+    if boxShadowCount ~= 0 then
+        for i = 1, boxShadowCount do
+            local boxShadow = self.boxShadow[i];
+            if boxShadow.inset then
+                boxShadow:render(self);
+            end
+        end
+    end
+
+    self:renderBorder();
 end
 
 --- @param inset? boolean
@@ -338,7 +350,7 @@ function SHElement:createBoxShadow(inset, offsetX, offsetY, blur, spread, color)
     blur = blur or 0;
     spread = spread or 0;
     color = color or { r = 0, g = 0, b = 0, a = 1 };
-    self.boxShadow = BoxShadow(inset, offsetX, offsetY, blur, spread, color);
+    table.insert(self.boxShadow, BoxShadow(inset, offsetX, offsetY, blur, spread, color));
 end
 
 function SHElement:renderBackground()
@@ -346,22 +358,92 @@ function SHElement:renderBackground()
 
     if not shader then return end
 
+    local bWidth = self.size.width
+        + (self.border.sizeL or self.border.size or 0)
+        + (self.border.sizeR or self.border.size or 0);
+    local bHeight = self.size.height
+        + (self.border.sizeT or self.border.size or 0)
+        + (self.border.sizeB or self.border.size or 0);
+
     local color = self.backgroundColor;
-    local x1 = -self.rotationPivot.x * self.size.width;
-    local y1 = -self.rotationPivot.y * self.size.height;
-    local x2, y2 = x1 + self.size.width, y1 + self.size.height;
+    local x1 = (-self.rotationPivot.x * bWidth) - SHElement.RENDER_PADDING;
+    local y1 = (-self.rotationPivot.y * bHeight) - SHElement.RENDER_PADDING;
+    local x2 = x1 + bWidth + (SHElement.RENDER_PADDING * 2);
+    local y2 = y1 + bHeight + (SHElement.RENDER_PADDING * 2);
 
     local tlx, tly, trx, try, brx, bry, blx, bly = self:rotateQuad2D(x1, y1, x2, y1, x2, y2, x1, y2);
 
     shader:enable();
-    self.border:apply(shader);
-    shader:applyDimension(x1, y1, x2, y2);
+    self.border:apply(self, shader);
+    shader:applyDimension(
+        x1,
+        y1,
+        x2,
+        y2
+    );
     shader:applyTransform(self.mat);
 
     shader:setUniforms({
         UIColor = { color.r, color.g, color.b, color.a },
         UITexture = 0
     });
+
+    renderer:render(
+        nil, -- Texture
+        tlx, tly,
+        trx, try,
+        brx, bry,
+        blx, bly,
+        x1, y1, 0, 0,
+        x2, y1, 0, 0,
+        x2, y2, 0, 0,
+        x1, y2, 0, 0,
+        nil -- RGBA
+    );
+
+    self.border:reset(shader);
+    shader:disable();
+end
+
+function SHElement:renderBorder()
+    local shader = self.shader;
+
+    if not shader or not shader.valid then return end
+
+    local bWidth = self.size.width
+        + (self.border.sizeL or self.border.size or 0)
+        + (self.border.sizeR or self.border.size or 0);
+    local bHeight = self.size.height
+        + (self.border.sizeT or self.border.size or 0)
+        + (self.border.sizeB or self.border.size or 0);
+
+    local color = self.backgroundColor;
+    local x1 = (-self.rotationPivot.x * bWidth) - SHElement.RENDER_PADDING;
+    local y1 = (-self.rotationPivot.y * bHeight) - SHElement.RENDER_PADDING;
+    local x2 = x1 + bWidth + (SHElement.RENDER_PADDING * 2);
+    local y2 = y1 + bHeight + (SHElement.RENDER_PADDING * 2);
+
+    local tlx, tly, trx, try, brx, bry, blx, bly = self:rotateQuad2D(x1, y1, x2, y1, x2, y2, x1, y2);
+
+    shader:enable();
+    self.border:apply(self, shader);
+    shader:applyDimension(
+        x1,
+        y1,
+        x2,
+        y2
+    );
+    shader:applyTransform(self.mat);
+
+    if shader.uniforms.UIColor then
+        shader.uniforms.UIColor:setRGBA(color);
+    end
+    if shader.uniforms.UITexture then
+        shader.uniforms.UITexture:setTexture(0);
+    end
+    if shader.uniforms.bBorder then
+        shader.uniforms.bBorder:setBoolean(true);
+    end
 
     renderer:render(
         nil, -- Texture
@@ -542,13 +624,19 @@ setmetatable(SHElement, mt);
 -- MARK: DEBUG CODE
 
 Events.OnGameStart.Add(function()
-    local parent = SHElement(400, 400, 256, 128);
+    --- @type SHElement
+    local parent = SHElement(256, 256, 256, 256);
     parent.backgroundColor.r = 1;
     parent.backgroundColor.g = 0;
     parent.backgroundColor.b = 0;
 
+    -- parent.border.color = { r = 1, g = 1, b = 1, a = 1 };
+    -- parent.border.size = 8;
+    -- parent.position.x = 128;
+    -- parent.position.y = 400;
+
     parent.text = 'Hello, World!';
-    parent.textRender = font:drawString(parent.text, 0, 0, {r = 1, g = 1, b = 1, a = 1});
+    parent.textRender = font:drawString(parent.text, 0, 0, { r = 1, g = 1, b = 1, a = 1 });
 
     parent.onUpdate = function(self)
         -- self.rotation.z = self.rotation.z + 0.5;
@@ -561,12 +649,18 @@ Events.OnGameStart.Add(function()
     end
 
     parent.onRender = function(self)
+        if not self.shader.valid then return end
         self.shader:enable();
         self.textRender:render(self.shader);
         self.shader:disable();
     end
 
-    parent:createBoxShadow(false, 32, 32);
+    parent:createBoxShadow(false, 16, 16, 16, 16, { r = 0, g = 0, b = 0, a = 0.5 });
+    parent:createBoxShadow(true, 0, 0, 24, 24, { r = 0, g = 0, b = 0, a = 0.5 });
+
+    parent.border.radiusTR = 128;
+    parent.border.size = 6;
+    parent.border.color = {r = 1, g = 1, b = 1, a = 1};
 
     local child = SHElement(200, 0, 64, 64);
     child.backgroundColor.r = 0;
@@ -578,7 +672,6 @@ Events.OnGameStart.Add(function()
     parent:addToScreen();
 
     _G.debugElement = parent;
-
 
     local reloadShadersButton = ISButton:new(64, 64, 128, 32, 'Reload Shaders', nil, function()
         reloadShader('ShadeHammer');

@@ -15,28 +15,7 @@ local renderer = getRenderer();
 --- @field loc number
 --- @field debug boolean
 --- @field __type ShaderUniformType
---- @field __tostring fun(self): string
 --- @field __index LuaShaderUniform
---- @field new fun(self, shader: LuaShader, name: string, loc: number, type: ShaderUniformType): LuaShaderUniform
---- @field set fun(self, arg1: number, arg2?: number, arg3?: number, arg4?: number)
---- @field createUnknownArg1ErrorMessage fun(self, arg1: string): string
---- @field createNilArgErrorMessage fun(self, name: string): string
---- @field createArgTypeErrorMessage fun(self, arg: any, name: string, expectedType: string): string
---- @field create2fTableErrorMessage fun(self, table: LuaVector2f): string
---- @field create2fArrayErrorMessage fun(self, array: number[]): string
---- @field create3fTableErrorMessage fun(self, table: LuaVector3f): string
---- @field create3fArrayErrorMessage fun(self, array: number[]): string
---- @field create4fTableErrorMessage fun(self, table: LuaVector4f): string
---- @field create4fArrayErrorMessage fun(self, array: number[]): string
---- @field setTexture fun(self, arg1: Texture|number, arg2?: number)
---- @field set1i fun(self, arg1: number)
---- @field set1f fun(self, arg1: number)
---- @field set2f fun(self, arg1: LuaVector4f | LuaVector3f | LuaVector2f | number[] | number, arg2?: number)
---- @field set3f fun(self, arg1: LuaVector4f | LuaVector3f | LuaVector2f | number[] | number, arg2?: number, arg3?: number)
---- @field set4f fun(self, arg1: LuaVector4f | LuaVector3f | LuaVector2f | number[] | number, arg2?: number, arg3?: number, arg4?: number)
---- @field set fun(self, arg1: LuaVector4f | LuaVector3f | LuaVector2f | Texture | number[] | number, arg2?: number, arg3?: number, arg4?: number)
-
---- @type LuaShaderUniform
 LuaShaderUniform = ISBaseObject:derive('LuaShaderUniform');
 
 LuaShaderUniform.DIFFUSE_TEXTURE_SLOT = 0;
@@ -56,8 +35,6 @@ function LuaShaderUniform:createUnknownArg1ErrorMessage(arg1)
     );
 end
 
---- @private
----
 --- @param name string The name of the parameter.
 ---
 --- @return string message
@@ -71,8 +48,6 @@ function LuaShaderUniform:createNilArgErrorMessage(name)
     );
 end
 
---- @private
----
 --- @param arg any
 --- @param name string
 --- @param expectedType string
@@ -90,8 +65,6 @@ function LuaShaderUniform:createArgTypeErrorMessage(arg, name, expectedType)
     );
 end
 
---- @private
----
 --- @param table LuaVector2f
 ---
 --- @return string message
@@ -105,8 +78,6 @@ function LuaShaderUniform:create2fTableErrorMessage(table)
     );
 end
 
---- @private
----
 --- @param array number[]
 ---
 --- @return string message
@@ -120,8 +91,6 @@ function LuaShaderUniform:create2fArrayErrorMessage(array)
     );
 end
 
---- @private
----
 --- @param table LuaVector3f
 ---
 --- @return string message
@@ -135,8 +104,6 @@ function LuaShaderUniform:create3fTableErrorMessage(table)
     );
 end
 
---- @private
----
 --- @param array number[]
 ---
 --- @return string message
@@ -150,8 +117,6 @@ function LuaShaderUniform:create3fArrayErrorMessage(array)
     );
 end
 
---- @private
----
 --- @param table LuaVector4f
 ---
 --- @return string message
@@ -165,8 +130,6 @@ function LuaShaderUniform:create4fTableErrorMessage(table)
     );
 end
 
---- @private
----
 --- @param array number[]
 ---
 --- @return string message
@@ -180,8 +143,32 @@ function LuaShaderUniform:create4fArrayErrorMessage(array)
     );
 end
 
---- @private
----
+function LuaShaderUniform:createNotUniformTypeErrorMessage(usedType)
+    return string.format(
+        'shader uniform %s %s.%s cannot be assigned using %s.',
+        self.__type,
+        self.shader.name,
+        self.name,
+        usedType
+    );
+end
+
+--- @param color SHColor
+function LuaShaderUniform:setRGBA(color)
+    if self.__type == 'vec4' then
+        self:set4f(color.r, color.g, color.b, color.a);
+    elseif self.__type == 'vec3' then
+        self:set3f(color.r, color.g, color.b);
+    end
+end
+
+--- @param flag boolean | number
+function LuaShaderUniform:setBoolean(flag)
+    local temp = 0;
+    if flag then temp = 1 end
+    self:set1i(temp);
+end
+
 --- @param arg1 Texture | number
 --- @param arg2? number
 function LuaShaderUniform:setTexture(arg1, arg2)
@@ -207,10 +194,12 @@ function LuaShaderUniform:setTexture(arg1, arg2)
     renderer:ShaderUpdate1i(self.shader.id, self.loc, textureSlot);
 end
 
---- @private
----
 --- @param arg1 number
 function LuaShaderUniform:set1i(arg1)
+    if self.__type ~= 'integer' and self.__type ~= 'sampler2D' then
+        error(self:createNotUniformTypeErrorMessage('sampler2D|int'), 2);
+    end
+
     -- Check if the argument is nil.
     if arg1 == nil then
         error(self:createNilArgErrorMessage('arg1'), 2);
@@ -232,13 +221,15 @@ function LuaShaderUniform:set1i(arg1)
     end
 end
 
---- @private
----
 --- @param arg1 number
 function LuaShaderUniform:set1f(arg1)
     -- Check if the argument is nil.
     if arg1 == nil then
         error(self:createNilArgErrorMessage('arg1'), 2);
+    end
+
+    if self.__type ~= 'float' then
+        error(self:createNotUniformTypeErrorMessage('float'), 2);
     end
 
     -- Make sure the argument is a number.
@@ -257,14 +248,16 @@ function LuaShaderUniform:set1f(arg1)
     end
 end
 
---- @private
----
 --- @param arg1 LuaVector4f | LuaVector3f | LuaVector2f | number[] | number
 --- @param arg2? number
 function LuaShaderUniform:set2f(arg1, arg2)
     -- Check if first argument is nil.
     if arg1 == nil then
         error(self:createNilArgErrorMessage('arg1'), 2);
+    end
+
+    if self.__type ~= 'vec2' then
+        error(self:createNotUniformTypeErrorMessage('vec2'), 2);
     end
 
     --- @type number, number
@@ -330,8 +323,6 @@ function LuaShaderUniform:set2f(arg1, arg2)
     end
 end
 
---- @private
----
 --- @param arg1 LuaVector4f | LuaVector3f | number[] | number
 --- @param arg2? number
 --- @param arg3? number
@@ -339,6 +330,10 @@ function LuaShaderUniform:set3f(arg1, arg2, arg3)
     -- Check if first argument is nil.
     if arg1 == nil then
         error(self:createNilArgErrorMessage('arg1'), 2);
+    end
+
+    if self.__type ~= 'vec3' then
+        error(self:createNotUniformTypeErrorMessage('vec2'), 2);
     end
 
     --- @type number, number, number
@@ -412,8 +407,6 @@ function LuaShaderUniform:set3f(arg1, arg2, arg3)
     end
 end
 
---- @private
----
 --- @param arg1 LuaVector4f | number[] | number
 --- @param arg2? number
 --- @param arg3? number
@@ -422,6 +415,10 @@ function LuaShaderUniform:set4f(arg1, arg2, arg3, arg4)
     -- Check if first argument is nil.
     if arg1 == nil then
         error(self:createNilArgErrorMessage('arg1'), 2);
+    end
+
+    if self.__type ~= 'vec4' then
+        error(self:createNotUniformTypeErrorMessage('vec4'), 2);
     end
 
     --- @type number, number, number, number

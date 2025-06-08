@@ -193,6 +193,9 @@ function LuaShader:setUniforms(uniforms)
                     if values.x ~= nil then
                         --- @cast values LuaVector3f
                         self:setUniform(name, values.x, values.y, values.z);
+                    elseif values.x ~= nil then
+                        --- @cast values SHColor
+                        self:setUniform(name, values.r, values.g, values.b);
                     else
                         self:setUniform(name, values[1], values[2], values[3]);
                     end
@@ -206,6 +209,9 @@ function LuaShader:setUniforms(uniforms)
                     if values.x ~= nil then
                         --- @cast values LuaVector4f
                         self:setUniform(name, values.x, values.y, values.z, values.w);
+                    elseif values.x ~= nil then
+                        --- @cast values SHColor
+                        self:setUniform(name, values.r, values.g, values.b, values.a);
                     else
                         self:setUniform(name, values[1], values[2], values[3], values[4]);
                     end
@@ -245,10 +251,10 @@ function LuaShader:applyTransform(mat)
     local t3 = self.uniforms.transform3;
     local t4 = self.uniforms.transform4;
     if t1 and t2 and t3 and t4 then
-        t1:set(mat.m00, mat.m01, mat.m02, mat.m03);
-        t2:set(mat.m10, mat.m11, mat.m12, mat.m13);
-        t3:set(mat.m20, mat.m21, mat.m22, mat.m23);
-        t4:set(mat.m30, mat.m31, mat.m32, mat.m33);
+        t1:set4f(mat.m00, mat.m01, mat.m02, mat.m03);
+        t2:set4f(mat.m10, mat.m11, mat.m12, mat.m13);
+        t3:set4f(mat.m20, mat.m21, mat.m22, mat.m23);
+        t4:set4f(mat.m30, mat.m31, mat.m32, mat.m33);
     end
 end
 
@@ -260,7 +266,7 @@ function LuaShader:applyDimension(x, y, width, height)
     if not self.valid or not self.enabled then return false end
 
     if self.uniforms.dim then
-        self.uniforms.dim:set(x, y, width, height);
+        self.uniforms.dim:set4f(x, y, width, height);
     end
 end
 
