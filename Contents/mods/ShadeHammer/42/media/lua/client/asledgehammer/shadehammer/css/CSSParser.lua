@@ -2,19 +2,23 @@ local function trim(s)
     return string.gsub(s, '^%s*(.-)%s*$', '%1');
 end
 
-local Parse = {};
+local function tokenize(str)
+    local tokens = {};
+    for token in string.gmatch(str, '[^%s]+') do
+        table.insert(tokens, token);
+    end
+    return tokens;
+end
 
---- @class UnitValueParseResult
---- @field error string? If non-nil, the parse failed.
---- @field unit string?
---- @field value number?
+--- @class CSSParser
+local CSSParser = {};
 
 -- MARK: Function
 
 --- @param str string
 ---
 --- @return UnitValueParseResult
-function Parse.tryParseUnitValue(str)
+function CSSParser.tryParseUnitValue(str)
     --- @type number|nil, number|nil
     local s_start, s_end;
 
@@ -84,4 +88,4 @@ function Parse.tryParseUnitValue(str)
     return { error = error, unit = unit, value = value };
 end
 
-return Parse;
+return CSSParser;
