@@ -57,6 +57,8 @@ local CSSStyleSet = class(
         end
 
         o.readOnly = readOnly or false;
+
+        return o.readOnly;
     end
 );
 

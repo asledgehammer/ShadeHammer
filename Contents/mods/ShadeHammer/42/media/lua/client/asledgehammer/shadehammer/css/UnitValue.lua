@@ -1,6 +1,12 @@
 local class = require 'asledgehammer/util/class';
 
---- @alias ValueUnit 'zero'|'auto'|'inherit'|'px'|'%'|'vw'|'vh' https://developer.mozilla.org/en-US/docs/Web/CSS/length#mm
+-- NOTE: The anchor-unit is `px'. 
+-- 
+-- "Note that if the anchor unit is the pixel unit, the physical units might not match their physical measurements.
+--  Alternatively if the anchor unit is a physical unit, the pixel unit might not map to a whole number of device 
+--  pixels." - https://www.w3.org/TR/CSS2/syndata.html#value-def-length
+
+--- @alias ValueUnit 'zero'|'auto'|'inherit'|'px'|'%'|'vw'|'vh' https://www.w3.org/TR/CSS2/syndata.html#value-def-length
 --- @alias RelativeUnitValue number|nil Calculated unit values. If nil, the origin has an invalid or missing unit.
 
 --- @class UnitValue https://developer.mozilla.org/en-US/docs/Web/CSS/length#mm
@@ -24,6 +30,7 @@ local UnitValue = class(
         o.value = value;
         o.unit = unit;
         o.readOnly = readOnly or false;
+        return o.readOnly;
     end
 );
 

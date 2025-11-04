@@ -1,6 +1,6 @@
 local class = require 'asledgehammer/util/class';
-local UnitValue = require 'asledgehammer/shadehammer/ui/UnitValue';
-local CSSParser = require 'asledgehammer/shadehammer/css/Parse';
+local UnitValue = require 'asledgehammer/shadehammer/css/UnitValue';
+local CSSParser = require 'asledgehammer/shadehammer/css/CSSParser';
 
 local function debugf(msg, ...)
     DebugLog.log(DebugType.Lua, string.format(msg, ...));
